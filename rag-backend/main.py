@@ -8,6 +8,8 @@ from rag.database import HeritageDatabase
 import google.generativeai as genai
 import os
 import httpx
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 app = FastAPI(title="Tareekh-ky-Jhonky RAG Backend")
 
@@ -75,13 +77,16 @@ class TranslateRequest(BaseModel):
 
 @app.on_event("startup")
 async def startup():
-    # Pre-warm the database
-    try:
-        db = HeritageDatabase()
-        count = db.ingest_all()
-        print(f"Heritage database loaded: {count} elements")
-    except Exception as e:
-        print(f"Failed to initialize database: {e}")
+    # Pre-warm the database in the background to avoid blocking Cloud Run startup
+    def init_db():
+        try:
+            db = HeritageDatabase()
+            count = db.ingest_all()
+            print(f"Heritage database loaded: {count} elements")
+        except Exception as e:
+            print(f"Failed to initialize database: {e}")
+    
+    asyncio.create_task(asyncio.to_thread(init_db))
 
 @app.post("/api/scan")
 async def scan_heritage(request: ScanRequest):
