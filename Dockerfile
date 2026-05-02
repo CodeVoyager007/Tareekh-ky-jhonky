@@ -5,6 +5,7 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 RUN npm run build
+RUN ls -la dist
 
 # Step 2: Build the Python backend
 FROM python:3.11-slim

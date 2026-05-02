@@ -22,6 +22,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Tareekh-ky-Jhonky RAG Backend", lifespan=lifespan)
 
+# Add request logging middleware to debug incoming requests
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print(f"Request: {request.method} {request.url.path}")
+    response = await call_next(request)
+    print(f"Response: {response.status_code}")
+    return response
+
 # Configure CORS for the frontend
 app.add_middleware(
     CORSMiddleware,
@@ -147,9 +155,18 @@ if os.path.exists(assets_path):
 @app.get("/")
 async def root():
     index_file = os.path.join(static_path, "index.html")
+    print(f"Serving root, looking for: {index_file}")
     if os.path.exists(index_file):
         return FileResponse(index_file)
-    return {"message": f"Frontend not found at {index_file}. Check build process.", "debug_static": static_path}
+    
+    # Debug info if missing
+    files = os.listdir(static_path) if os.path.exists(static_path) else "N/A"
+    return {
+        "message": "Frontend index.html not found",
+        "static_path": static_path,
+        "exists": os.path.exists(static_path),
+        "contents": files
+    }
 
 @app.get("/{rest_of_path:path}")
 async def serve_static(rest_of_path: str):
