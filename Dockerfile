@@ -11,7 +11,7 @@ RUN ls -la dist
 FROM python:3.11-slim
 WORKDIR /app
 
-# Install system dependencies if needed (e.g., for some python packages)
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
@@ -20,11 +20,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY rag-backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend source code from the rag-backend subdirectory to the root of the container
+# Copy backend code first
 COPY rag-backend/ .
 
-# Copy the built frontend from the builder stage into a 'static' directory
+# IMPORTANT: Copy frontend static files AFTER backend code
+# This prevents backend/static (if it exists) from overwriting built files
 COPY --from=frontend-builder /app/dist ./static
+
+# Verify the static directory
+RUN ls -la ./static
 
 # Ensure the DB is initialized if necessary (optional depending on implementation)
 # RUN python -c "from rag.database import HeritageDatabase; HeritageDatabase().ingest_all()"

@@ -134,57 +134,70 @@ async def health():
     return {"status": "ok", "service": "TKJ RAG Backend"}
 
 # After all API routes, serve the static frontend
-# We check if the static directory exists (it will be created in Docker build)
-static_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "static")
-if not os.path.exists(static_path):
-    # Fallback for local dev if static is in parent or sibling
-    static_path = os.path.join(os.getcwd(), "static")
+# Use both relative and absolute search for static directory
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+possible_static_paths = [
+    os.path.join(BASE_DIR, "static"),
+    os.path.join(os.getcwd(), "static"),
+    "/app/static"
+]
 
-print(f"Static files path: {static_path}")
+static_path = None
+for p in possible_static_paths:
+    print(f"DEBUG: Checking for static at {p}")
+    if os.path.exists(p) and os.path.isdir(p):
+        static_path = p
+        print(f"DEBUG: Found static directory at {static_path}")
+        break
+
+if not static_path:
+    static_path = os.path.join(BASE_DIR, "static") # Fallback
+    print(f"DEBUG: Static directory not found! Defaulting to {static_path}")
+
 if os.path.exists(static_path):
-    print(f"Contents of static: {os.listdir(static_path)}")
+    print(f"DEBUG: Contents of {static_path}: {os.listdir(static_path)}")
 else:
-    print("Warning: static directory not found!")
+    print(f"DEBUG: Static path {static_path} still does not exist.")
 
 
 # Mount assets if they exist
 assets_path = os.path.join(static_path, "assets")
 if os.path.exists(assets_path):
+    print(f"DEBUG: Mounting assets from {assets_path}")
     app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
 
 @app.get("/")
 async def root():
     index_file = os.path.join(static_path, "index.html")
-    print(f"Serving root, looking for: {index_file}")
+    print(f"DEBUG: Root request. Looking for index at {index_file}")
     if os.path.exists(index_file):
         return FileResponse(index_file)
     
     # Debug info if missing
     files = os.listdir(static_path) if os.path.exists(static_path) else "N/A"
     return {
-        "message": "Frontend index.html not found",
+        "error": "Frontend index.html not found",
         "static_path": static_path,
         "exists": os.path.exists(static_path),
-        "contents": files
+        "contents": files,
+        "cwd": os.getcwd(),
+        "base_dir": BASE_DIR
     }
 
 @app.get("/{rest_of_path:path}")
 async def serve_static(rest_of_path: str):
-    # Skip API routes explicitly (though they should have been matched by now)
-    if rest_of_path.startswith("api/"):
-         raise HTTPException(status_code=404)
-
     # Try serving the file directly from static directory
     file_path = os.path.join(static_path, rest_of_path)
     if os.path.exists(file_path) and os.path.isfile(file_path):
         return FileResponse(file_path)
     
-    # SPA fallback: Serve index.html for any other route
-    index_file = os.path.join(static_path, "index.html")
-    if os.path.exists(index_file):
-        return FileResponse(index_file)
+    # SPA fallback: Serve index.html for any other route (except API)
+    if not rest_of_path.startswith("api/"):
+        index_file = os.path.join(static_path, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
     
-    return {"message": f"Asset {rest_of_path} not found and frontend fallback failed at {index_file}"}
+    raise HTTPException(status_code=404, detail=f"Path {rest_of_path} not found")
 
 if __name__ == "__main__":
     import uvicorn
