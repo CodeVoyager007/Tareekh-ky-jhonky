@@ -110,7 +110,7 @@ async def translate_story(request: TranslateRequest):
     try:
         api_key = os.getenv("GEMINI_API_KEY")
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-pro")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         
         lang_prompts = {
             "Urdu": "Translate to traditional Urdu script (Persian-Arabic). Strictly FORBID Roman Urdu or Latin characters. Return only the translated text in traditional script.",

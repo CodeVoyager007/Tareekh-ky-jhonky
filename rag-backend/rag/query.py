@@ -34,7 +34,7 @@ def query_with_rag(vision_result: dict, language: str = "english") -> dict:
     # Call Gemini with RAG context
     api_key = os.getenv("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-1.5-pro")
+    model = genai.GenerativeModel("gemini-1.5-flash")
     
     lang_instruction = {
         "english": "Respond in clear factual English.",

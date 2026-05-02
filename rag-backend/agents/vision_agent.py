@@ -5,7 +5,7 @@ import os
 def analyze_image(image_base64: str, mime_type: str = "image/jpeg") -> dict:
     api_key = os.getenv("GEMINI_API_KEY")
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-1.5-pro")
+    model = genai.GenerativeModel("gemini-1.5-flash")
     
     # Remove data:image/jpeg;base64, prefix if present
     if "," in image_base64:
