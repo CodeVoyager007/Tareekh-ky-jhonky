@@ -11,7 +11,16 @@ import httpx
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-app = FastAPI(title="Tareekh-ky-Jhonky RAG Backend")
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print(f"FastAPI application starting up on port {os.getenv('PORT', '8080')}...")
+    # Initialization is deferred to first request to ensure fast Cloud Run boot
+    yield
+    print("FastAPI application shutting down...")
+
+app = FastAPI(title="Tareekh-ky-Jhonky RAG Backend", lifespan=lifespan)
 
 # Configure CORS for the frontend
 app.add_middleware(
@@ -61,10 +70,9 @@ async def diagnostic():
     return {
         "hasGeminiKey": bool(os.getenv("GEMINI_API_KEY")),
         "hasMapsKey": bool(os.getenv("GOOGLE_MAPS_API_KEY")),
-        "env": os.getenv("NODE_ENV", "development")
+        "env": os.getenv("NODE_ENV", "development"),
+        "static_path": static_path if 'static_path' in globals() else "not_defined"
     }
-
-# After all API routes, serve the static frontend
 
 class ScanRequest(BaseModel):
     image_base64: str
@@ -74,11 +82,6 @@ class ScanRequest(BaseModel):
 class TranslateRequest(BaseModel):
     story: str
     language: str
-
-@app.on_event("startup")
-async def startup():
-    print(f"FastAPI application starting up on port {os.getenv('PORT', '8080')}...")
-    # Initialization is deferred to first request to ensure fast Cloud Run boot
 
 @app.post("/api/scan")
 async def scan_heritage(request: ScanRequest):
@@ -124,30 +127,47 @@ async def health():
 
 # After all API routes, serve the static frontend
 # We check if the static directory exists (it will be created in Docker build)
-static_path = os.path.join(os.getcwd(), "static")
+static_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "static")
+if not os.path.exists(static_path):
+    # Fallback for local dev if static is in parent or sibling
+    static_path = os.path.join(os.getcwd(), "static")
+
+print(f"Static files path: {static_path}")
+if os.path.exists(static_path):
+    print(f"Contents of static: {os.listdir(static_path)}")
+else:
+    print("Warning: static directory not found!")
+
+
+# Mount assets if they exist
+assets_path = os.path.join(static_path, "assets")
+if os.path.exists(assets_path):
+    app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+
+@app.get("/")
+async def root():
+    index_file = os.path.join(static_path, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    return {"message": f"Frontend not found at {index_file}. Check build process.", "debug_static": static_path}
 
 @app.get("/{rest_of_path:path}")
 async def serve_static(rest_of_path: str):
-    # If it starts with api/, it's a 404 for API
+    # Skip API routes explicitly (though they should have been matched by now)
     if rest_of_path.startswith("api/"):
          raise HTTPException(status_code=404)
 
-    if rest_of_path == "" or rest_of_path == "/":
-        index_file = os.path.join(static_path, "index.html")
-        if os.path.exists(index_file):
-            return FileResponse(index_file)
-        return {"message": "Frontend not built yet. Run 'npm run build'"}
-    
+    # Try serving the file directly from static directory
     file_path = os.path.join(static_path, rest_of_path)
     if os.path.exists(file_path) and os.path.isfile(file_path):
         return FileResponse(file_path)
     
-    # SPA fallback
+    # SPA fallback: Serve index.html for any other route
     index_file = os.path.join(static_path, "index.html")
     if os.path.exists(index_file):
         return FileResponse(index_file)
     
-    return {"message": f"Asset {rest_of_path} not found and frontend not available"}
+    return {"message": f"Asset {rest_of_path} not found and frontend fallback failed at {index_file}"}
 
 if __name__ == "__main__":
     import uvicorn
