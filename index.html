@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tareekh-ky-Jhonky | تاریخ کے جھونکے</title>
+    <script>
+      // Suppress Vite environmental errors (HMR/WebSocket) which are expected
+      // but benign in this sandboxed development environment.
+      (function() {
+        const suppressStrings = [
+          '[vite] failed to connect to websocket',
+          'WebSocket closed without opened',
+          'failed to connect to websocket'
+        ];
+
+        const isProblematic = (msg) => {
+          if (!msg) return false;
+          const str = typeof msg === 'string' ? msg : msg.toString();
+          return suppressStrings.some(s => str.includes(s));
+        };
+
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        console.error = function(...args) {
+          if (args.some(isProblematic)) return;
+          originalError.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+          if (args.some(isProblematic)) return;
+          originalWarn.apply(console, args);
+        };
+
+        window.addEventListener('unhandledrejection', function(event) {
+          if (event.reason && isProblematic(event.reason.message || event.reason)) {
+            event.stopImmediatePropagation();
+            event.preventDefault();
+          }
+        }, true);
+
+        window.addEventListener('error', function(event) {
+          if (isProblematic(event.message)) {
+            event.stopImmediatePropagation();
+            event.preventDefault();
+          }
+        }, true);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

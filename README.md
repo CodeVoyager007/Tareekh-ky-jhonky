@@ -1,11 +1,43 @@
-<div align="center">
+# Tareekh-ky-Jhonky
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+A premium, minimalist digital repository for exploring and preserving historical heritage.
 
-  <h1>Built with AI Studio</h2>
+## Features
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+- **Heritage Recognition**: Use your camera to identify historical monuments and artifacts instantly with AI.
+- **Digital Archive**: Save your discoveries to a personal archive that syncs across devices.
+- **Collection Stamps**: Earn digital stamps for every historical site you visit.
+- **Acoustic Reconstruction**: Experience historical sites through AI-generated soundscapes.
+- **Multilingual Stories**: Listen to the history and folk legends of each site in multiple languages.
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## Tech Stack
 
-</div>
+- **Frontend**: React, Vite, Tailwind CSS, Motion
+- **Backend**: Express (Vite Middleware)
+- **Database**: Firebase Firestore
+- **Authentication**: Firebase Auth (Google Sign-In)
+- **AI**: Gemini Pro Vision for identification and storytelling
+
+## Setup
+
+1. **Environment Variables**:
+   Copy `.env.example` to `.env` and provide your:
+   - `GEMINI_API_KEY`: Google AI SDK key.
+   - Firebase configuration in `firebase-applet-config.json`.
+
+2. **Installation**:
+   ```bash
+   npm install
+   ```
+
+3. **Development**:
+   ```bash
+   npm run dev
+   ```
+
+## Design
+
+The app follows a high-contrast, premium aesthetic:
+- **Primary Colors**: Pure Black (`#000000`) and Heritage Gold (`#C5A059`).
+- **Typography**: Bold, uppercase sans-serif headers with minimalist tracking.
+- **Interaction**: Micro-animations powered by Framer Motion for a fluid, archival feel.

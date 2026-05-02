@@ -1,0 +1,102 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700;900&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap');
+
+@theme {
+  --font-serif: "Libre Baskerville", serif;
+  --font-sans: "Inter", sans-serif;
+  --font-urdu: "Noto Nastaliq Urdu", serif;
+  
+  --color-bg-primary: #F7F3ED;
+  --color-bg-secondary: #EDE8E0;
+  --color-bg-card: #FFFFFF;
+  --color-blue-primary: #2E6BA8;
+  --color-blue-dark: #1A4A7A;
+  --color-blue-light: #D6E8F5;
+  --color-accent-gold: #C8973A;
+  --color-text-primary: #1A1A2E;
+  --color-text-secondary: #4A5568;
+  --color-text-muted: #9AA5B4;
+  --color-border-warm: #E2D9CE;
+  
+  --color-heritage-dark: var(--color-blue-dark);
+  --color-heritage-gold: var(--color-accent-gold);
+}
+
+.urdu-text {
+  font-family: var(--font-urdu);
+  line-height: 2.2;
+}
+
+.santorini-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-warm);
+  box-shadow: 0 4px 20px rgba(46, 107, 168, 0.08); /* Blue-tinted shadow */
+  border-radius: 16px;
+}
+
+.santorini-shadow {
+  box-shadow: 0 4px 20px rgba(46, 107, 168, 0.08);
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-20px) translateX(10px); }
+}
+
+.animate-float-slow {
+  animation: float-slow linear infinite;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-blue-light);
+  color: var(--color-blue-dark);
+}
+
+.antique-text {
+  font-family: var(--font-serif);
+  letter-spacing: -0.02em;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border-warm);
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-draw {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw 3s ease-in-out forwards;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-blue-primary);
+  border-radius: 10px;
+}

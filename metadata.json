@@ -1,0 +1,12 @@
+{
+  "name": "Tareekh-ky-Jhonky",
+  "description": "A premium digital museum archive for Pakistani heritage, using AI to identify historical artifacts and narrate their lost stories in a minimalist, bold dark-mode interface.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "Multimodal Heritage Recognition",
+    "Multilingual Storytelling"
+  ]
+}

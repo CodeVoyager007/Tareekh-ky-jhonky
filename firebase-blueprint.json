@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account and preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastLogin": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Discovery": {
+      "title": "Saved Discovery",
+      "description": "A heritage element discovered and saved by the user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "element_type": { "type": "string" },
+        "era": { "type": "string" },
+        "cultural_region": { "type": "string" },
+        "specific_name": { "type": "string" },
+        "story": { "type": "string" },
+        "image": { "type": "string" },
+        "savedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "specific_name"]
+    },
+    "Stamp": {
+      "title": "Heritage Stamp",
+      "description": "A stamp earned by visiting a site",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "siteName": { "type": "string" },
+        "elementName": { "type": "string" },
+        "era": { "type": "string" },
+        "dateEarned": { "type": "string", "format": "date-time" },
+        "thumbnail": { "type": "string" }
+      },
+      "required": ["userId", "siteName"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Root user profile"
+    },
+    "/users/{userId}/discoveries/{discoveryId}": {
+      "schema": "Discovery",
+      "description": "User's saved discoveries"
+    },
+    "/users/{userId}/stamps/{stampId}": {
+      "schema": "Stamp",
+      "description": "User's earned stamps"
+    }
+  }
+}
