@@ -50,7 +50,6 @@ async function startServer() {
       });
 
       if (!searchResponse.ok) {
-        const errorData = await searchResponse.json();
         return res.status(searchResponse.status).json({ error: "Failed to search for place" });
       }
 
@@ -66,6 +65,38 @@ async function startServer() {
       res.redirect(photoUrl);
     } catch (error) {
       res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Proxy to RAG Backend (Python) if it's running locally on 8080
+  // This allows the frontend to always call /api/scan without needing a secret URL
+  const RAG_BACKEND_URL = "http://localhost:8080";
+
+  app.post("/api/scan", async (req, res) => {
+    try {
+      const response = await fetch(`${RAG_BACKEND_URL}/api/scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(req.body)
+      });
+      const data = await response.json();
+      res.status(response.status).json(data);
+    } catch (err) {
+      res.status(503).json({ error: "RAG Backend not reachable in development" });
+    }
+  });
+
+  app.post("/api/translate", async (req, res) => {
+    try {
+      const response = await fetch(`${RAG_BACKEND_URL}/api/translate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(req.body)
+      });
+      const data = await response.json();
+      res.status(response.status).json(data);
+    } catch (err) {
+      res.status(503).json({ error: "RAG Backend not reachable in development" });
     }
   });
 

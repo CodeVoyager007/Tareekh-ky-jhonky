@@ -6,6 +6,27 @@ import { Language, AnalysisResult, InscriptionResult, InstrumentResult } from ".
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export const analyzeHeritageImage = async (base64: string, targetLang: string): Promise<AnalysisResult> => {
+  // Try RAG Backend first using relative path (no secret URL needed)
+  try {
+    const response = await fetch("/api/scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        image_base64: base64,
+        language: targetLang || "English"
+      })
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success) return result.data;
+    }
+    console.warn("RAG Backend not available or failed, falling back to direct Gemini");
+  } catch (err) {
+    console.warn("RAG Backend connection failed, falling back to direct Gemini", err);
+  }
+
+  // Fallback to direct Gemini
   let languageInstruction;
   if (targetLang === "Urdu") {
     languageInstruction = `The story should be in traditional Urdu script (Persian-Arabic script). Crucially, at the end of the "story" field, add a section marked exactly as [PHONETIC] followed by a Roman Urdu version of the same story. The Roman Urdu should be written phonetically to sound like a natural South Asian narrator.`;
@@ -33,7 +54,9 @@ export const analyzeHeritageImage = async (base64: string, targetLang: string): 
           }
         ]
       }],
-      tools: [{ googleSearch: {} }]
+      config: {
+        tools: [{ googleSearch: {} }]
+      }
     });
 
     const responseText = response.text || "";
@@ -47,6 +70,25 @@ export const analyzeHeritageImage = async (base64: string, targetLang: string): 
 
 export const translateStory = async (story: string, targetLang: Language): Promise<string> => {
   if (targetLang === "English") return story;
+
+  // Try RAG Backend first
+  try {
+    const response = await fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        story,
+        language: targetLang
+      })
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success) return result.text;
+    }
+  } catch (err) {
+    console.warn("RAG Translate connection failed, falling back to direct Gemini", err);
+  }
 
   const prompts: Record<string, string> = {
     "Urdu": `Translate the following to daily conversational Urdu using traditional Urdu script (Persian-Arabic script). DO NOT use Roman Urdu in the main translation. 
@@ -85,7 +127,9 @@ export const translateInscription = async (base64: string): Promise<InscriptionR
           { inlineData: { data: base64.split(",")[1], mimeType: "image/jpeg" } }
         ]
       }],
-      tools: [{ googleSearch: {} }]
+      config: {
+        tools: [{ googleSearch: {} }]
+      }
     });
 
     const cleanJson = (result.text || "").replace(/```json\n?|\n?```/g, "").trim();
@@ -122,7 +166,9 @@ export const analyzeInstrument = async (base64: string): Promise<InstrumentResul
           { inlineData: { data: base64.split(",")[1], mimeType: "image/jpeg" } }
         ]
       }],
-      tools: [{ googleSearch: {} }]
+      config: {
+        tools: [{ googleSearch: {} }]
+      }
     });
 
     const cleanJson = (result.text || "").replace(/```json\n?|\n?```/g, "").trim();
