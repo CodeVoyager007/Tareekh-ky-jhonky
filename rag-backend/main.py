@@ -3,8 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel
-from agents.orchestrator import process_scan
-from rag.database import HeritageDatabase
+# from agents.orchestrator import process_scan
+# from rag.database import HeritageDatabase
 import google.generativeai as genai
 import os
 import httpx
@@ -77,20 +77,13 @@ class TranslateRequest(BaseModel):
 
 @app.on_event("startup")
 async def startup():
-    # Pre-warm the database in the background to avoid blocking Cloud Run startup
-    def init_db():
-        try:
-            db = HeritageDatabase()
-            count = db.ingest_all()
-            print(f"Heritage database loaded: {count} elements")
-        except Exception as e:
-            print(f"Failed to initialize database: {e}")
-    
-    asyncio.create_task(asyncio.to_thread(init_db))
+    print(f"FastAPI application starting up on port {os.getenv('PORT', '8080')}...")
+    # Initialization is deferred to first request to ensure fast Cloud Run boot
 
 @app.post("/api/scan")
 async def scan_heritage(request: ScanRequest):
     try:
+        from agents.orchestrator import process_scan
         result = process_scan(
             request.image_base64,
             request.mime_type,
@@ -121,13 +114,13 @@ async def translate_story(request: TranslateRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/health")
+async def health_root():
+    return {"status": "ok"}
+
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "service": "TKJ RAG Backend"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8080)
 
 # After all API routes, serve the static frontend
 # We check if the static directory exists (it will be created in Docker build)
@@ -155,3 +148,9 @@ async def serve_static(rest_of_path: str):
         return FileResponse(index_file)
     
     return {"message": f"Asset {rest_of_path} not found and frontend not available"}
+
+if __name__ == "__main__":
+    import uvicorn
+    # Use the port from the environment variable if available
+    port = int(os.getenv("PORT", 8080))
+    uvicorn.run(app, host="0.0.0.0", port=port)

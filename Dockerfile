@@ -35,5 +35,6 @@ EXPOSE 8080
 ENV PORT=8080
 ENV NODE_ENV=production
 
-# Start the FastAPI server using uvicorn
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}
+# Start the FastAPI server using python
+# This ensures that main.py's __main__ block runs and correctly handles the $PORT variable
+CMD ["python", "main.py"]

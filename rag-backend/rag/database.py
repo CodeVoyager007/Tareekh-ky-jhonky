@@ -1,3 +1,10 @@
+try:
+    import pysqlite3 as sqlite3
+    import sys
+    sys.modules["sqlite3"] = sys.modules.pop("pysqlite3")
+except ImportError:
+    pass
+
 import chromadb
 from chromadb.utils import embedding_functions
 import json
@@ -5,9 +12,9 @@ import os
 
 class HeritageDatabase:
     def __init__(self):
-        # In a real environment, you'd use a persistent path. 
-        # For this demo, we'll use an in-memory or local path.
-        self.client = chromadb.PersistentClient(path="./chroma_db")
+        # In Cloud Run, we must use /tmp for any writeable storage
+        db_path = os.getenv("CHROMA_DB_PATH", "/tmp/chroma_db")
+        self.client = chromadb.PersistentClient(path=db_path)
         
         # Use Google's embedding function
         api_key = os.getenv("GEMINI_API_KEY")
