@@ -16,7 +16,19 @@ from contextlib import asynccontextmanager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print(f"FastAPI application starting up on port {os.getenv('PORT', '8080')}...")
-    # Initialization is deferred to first request to ensure fast Cloud Run boot
+    
+    # Debug: List available models
+    try:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if api_key:
+            genai.configure(api_key=api_key)
+            print("Available Gemini Models:")
+            for m in genai.list_models():
+                if "generateContent" in m.supported_generation_methods:
+                    print(f" - {m.name}")
+    except Exception as e:
+        print(f"Could not list models: {e}")
+        
     yield
     print("FastAPI application shutting down...")
 
@@ -72,6 +84,24 @@ async def get_place_photo(query: str):
             return RedirectResponse(photo_url)
         except Exception as e:
              raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/models")
+async def list_models():
+    try:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return {"error": "GEMINI_API_KEY not set"}
+        genai.configure(api_key=api_key)
+        models = []
+        for m in genai.list_models():
+            models.append({
+                "name": m.name,
+                "supported_methods": m.supported_generation_methods,
+                "description": m.description
+            })
+        return {"models": models}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.get("/api/diag")
 async def diagnostic():
